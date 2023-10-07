@@ -31,6 +31,7 @@
 
 
 <script>
+    let endpoint ="ASHU";
     function login() {
         const data = {
             username: document.getElementById('username').value,
@@ -44,8 +45,8 @@
                 if (res && res.data && res.data.success) {
                     const token = res.data.token;
                     localStorage.setItem('jwt', token);
+                    //changeRoute('dashboard');
                     getDashboard();
-                    settings();
             }
         });
     }
@@ -57,10 +58,17 @@
                 'Authorization': `Bearer ${token}`
             }
         }).then(res => {
-            if (res && res.data && res.data. success) {
+            if (res && res.data && res.data.success) {
                 document.querySelector('h1.row').innerHTML = 'Dashboard';
                 document.querySelector('main').innerHTML = res.data.myContent;
+                history.pushState(null,null, endpoint);
             }
+        }).catch(err => {
+                console.error(err); //token expiry
+                if (err.response.status === 401) {
+                    localStorage.removeItem('jwt');
+                    window.location.href = '/';
+                }
         });
     }
 
@@ -72,11 +80,29 @@
             }
         }).then(res => {
             if (res && res.data && res.data.success) {
-                document.querySelector('h1.row').innerHTML = 'Dashboard';
+                history.pushState(token, null, endpoint);
+                document.querySelector('h1.row').innerHTML = 'Settings';
                 document.querySelector('main').innerHTML = res.data.Content;        
             }
         });
     }
+ 
+    function onLoad() {const token = localStorage.getItem("jwt");
+        if (token) {
+          getDashboard();
+        }}setInterval(() => {
+        if (document.location.href.endsWith(endpoint)) {
+          const token = localStorage.getItem("jwt");
+          axios.get(endpoint, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }).then((res) => {
+              if (res && res.data && !res.data.success) {
+                location.replace(document.location.origin);
+              }
+            });
+        }}, 3000);
 </script>
 </body>
 </html>
